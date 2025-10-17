@@ -1,24 +1,24 @@
-name: Run Tanvir BOT
+name: Deploy Bot
 
 on:
-  workflow_dispatch: # ম্যানুয়ালি রান করার অপশন
-  schedule:
-    - cron: "0 * * * *" # প্রতি ঘন্টায় রান করবে (ইচ্ছেমতো সময় দিতে পারো)
+  push:
+    branches:
+      - main
 
 jobs:
-  run-bot:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: '18'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Run bot
+      - name: Run the bot
         run: node index.js
