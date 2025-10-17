@@ -1,24 +1,38 @@
-name: Deploy Bot
+name: 🟢 Run TanuGPT Bot
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  build:
+  run-bot:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: 🧩 Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        run: npm install
+      - name: 📦 Install dependencies
+        run: |
+          npm install
 
-      - name: Run the bot
-        run: node index.js
+      - name: 🔐 Setup environment variables
+        run: |
+          echo "BOT_NAME=${{ secrets.BOT_NAME }}" >> .env
+          echo "OWNER_NAME=${{ secrets.OWNER_NAME }}" >> .env
+          echo "PREFIX=${{ secrets.PREFIX }}" >> .env
+          echo "LANGUAGE=${{ secrets.LANGUAGE }}" >> .env
+          echo "TIMEZONE=${{ secrets.TIMEZONE }}" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
+
+      - name: 🚀 Start the bot
+        run: |
+          node index.js
