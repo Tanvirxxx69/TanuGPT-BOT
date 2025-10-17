@@ -3,48 +3,75 @@ const moment = require("moment-timezone");
 
 module.exports = {
   config: {
-    name: "namaz",
-    aliases: ["prayer", "namaztime"],
+    name: "namazAuto",
     version: "1.0",
     author: "Tanvir",
-    shortDescription: "নামাজ রিমাইন্ডার ও আজান নোটিফিকেশন",
-    longDescription: "বাংলাদেশ সময় অনুযায়ী নামাজের সময় জানায় ও মনে করিয়ে দেয়",
+    description: "বাংলাদেশ সময় অনুযায়ী অটো নামাজ রিমাইন্ডার (সব গ্রুপে পাঠায়)",
     category: "islamic",
   },
 
-  onStart: async function ({ api, event, args }) {
-    try {
-      // ব্যবহারকারীর জিজ্ঞেস করা জায়গা
-      const location = args.join(" ") || "Dhaka";
-      const country = "Bangladesh";
+  onStart: async function ({ api }) {
+    const location = "Dhaka";
+    const country = "Bangladesh";
 
-      // সময় আনো
-      const response = await axios.get(
-        `https://api.aladhan.com/v1/timingsByCity?city=${location}&country=${country}&method=2`
-      );
-
-      const timings = response.data.data.timings;
-
-      const msg = `
-🕌 *${location}, ${country}* এর নামাজের সময়সূচি 🕒
-
-🌅 ফজরঃ ${timings.Fajr}
-🌞 যোহরঃ ${timings.Dhuhr}
-🌇 আসরঃ ${timings.Asr}
-🌆 মাগরিবঃ ${timings.Maghrib}
-🌙 এশাঃ ${timings.Isha}
-
-⏰ সময় অনুযায়ী নামাজ আদায় করুন ভাই, আল্লাহ বরকত দিন 🤲
-`;
-
-      api.sendMessage(msg, event.threadID, event.messageID);
-    } catch (error) {
-      console.error(error);
-      api.sendMessage(
-        "দুঃখিত ভাই 😢 নামাজের সময় আনা যায়নি। একটু পর আবার চেষ্টা করুন।",
-        event.threadID,
-        event.messageID
-      );
+    // নামাজের সময় বের করো
+    async function getPrayerTimes() {
+      try {
+        const res = await axios.get(
+          `https://api.aladhan.com/v1/timingsByCity?city=${location}&country=${country}&method=2`
+        );
+        return res.data.data.timings;
+      } catch (e) {
+        console.error("নামাজের সময় আনা যায়নি:", e.message);
+        return null;
+      }
     }
+
+    // মেসেজ পাঠানোর ফাংশন
+    async function sendToAll(msg) {
+      if (global.data && global.data.allThreadID) {
+        for (const threadID of global.data.allThreadID) {
+          try {
+            await api.sendMessage(msg, threadID);
+          } catch (err) {
+            console.error("মেসেজ পাঠানো ব্যর্থ:", err.message);
+          }
+        }
+      }
+    }
+
+    // রিমাইন্ডার সিস্টেম
+    async function scheduleNamazReminders() {
+      const times = await getPrayerTimes();
+      if (!times) return;
+
+      const namazList = [
+        { name: "ফজর", time: times.Fajr },
+        { name: "যোহর", time: times.Dhuhr },
+        { name: "আসর", time: times.Asr },
+        { name: "মাগরিব", time: times.Maghrib },
+        { name: "এশা", time: times.Isha },
+      ];
+
+      for (const namaz of namazList) {
+        const now = moment().tz("Asia/Dhaka");
+        const namazTime = moment.tz(namaz.time, "HH:mm", "Asia/Dhaka");
+
+        if (namazTime.isBefore(now)) namazTime.add(1, "day"); // পরের দিনের জন্য সেট
+
+        const msUntilNamaz = namazTime.diff(now);
+
+        setTimeout(() => {
+          const msg = `🕌 *${namaz.name} নামাজের সময় হয়েছে ভাই!* ⏰\nআসুন সবাই নামাজে যোগ দেই 🤲`;
+          sendToAll(msg);
+        }, msUntilNamaz);
+
+        console.log(`${namaz.name} নামাজ রিমাইন্ডার সেট হয়েছে ${namazTime.format("h:mm A")} এ`);
+      }
+    }
+
+    // প্রতি ১২ ঘণ্টা পর আপডেট
+    await scheduleNamazReminders();
+    setInterval(scheduleNamazReminders, 12 * 60 * 60 * 1000);
   },
 };
