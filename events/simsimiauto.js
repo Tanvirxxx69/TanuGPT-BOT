@@ -1,49 +1,57 @@
 const fs = require("fs");
 const path = require("path");
-const dbPath = path.join(__dirname, "nameMemory.json");
+const dbPath = path.join(__dirname, "simiMemory.json");
 
-// মেমোরি ফাইল না থাকলে তৈরি করো
+// প্রথমবার ফাইল না থাকলে তৈরি করা
 if (!fs.existsSync(dbPath)) fs.writeFileSync(dbPath, JSON.stringify({}, null, 2));
 
 module.exports = {
   config: {
-    name: "simsimiAutoReply",
-    eventType: ["message"],
+    name: "simi",
+    aliases: ["simsimi", "chat"],
     version: "2.0",
     author: "Tanvir",
-    description: "SimSimi স্টাইল অটো নাম/চ্যাট রিপ্লাই, অটো শিখবে 🧠",
+    shortDescription: "SimSimi টাইপ রিপ্লাই বট 😎",
+    longDescription: "যেকোনো নাম দিলে তার মজার রিপ্লাই দিবে, আর নতুন নাম মনে রাখবে 😏",
+    category: "fun",
+    guide: {
+      bn: "{p}simi [নাম]\nযেমন: /simi তানভীর",
+    },
   },
 
-  onEvent: async function ({ api, event }) {
+  onStart: async function ({ api, event, args }) {
+    const { threadID, messageID } = event;
+    const name = args.join(" ").trim().toLowerCase();
+
+    if (!name) {
+      return api.sendMessage(
+        "😺 দয়া করে একটা নাম দিন ভাই!\nউদাহরণ: /simi তানভীর",
+        threadID,
+        messageID
+      );
+    }
+
     try {
-      const { body, senderID, threadID } = event;
-      if (!body) return;
-      const text = body.toLowerCase();
-
-      if (senderID === api.getCurrentUserID()) return;
-
-      // ডেটা লোড
       let memory = JSON.parse(fs.readFileSync(dbPath));
 
-      // নামগুলো চেক করা
-      const found = Object.keys(memory).find(name => text.includes(name.toLowerCase()));
-
-      if (found) {
-        const replies = memory[found];
+      // যদি নাম আগে থেকে থাকে
+      if (memory[name]) {
+        const replies = memory[name];
         const randomReply = replies[Math.floor(Math.random() * replies.length)];
-        api.sendMessage(randomReply, threadID);
+        api.sendMessage(randomReply, threadID, messageID);
       } else {
-        // যদি নতুন নাম হয়, তাহলে সংরক্ষণ
-        memory[text] = [
-          `${text} কে চিনি না ভাই, কিন্তু এখন থেকে চিনে রাখলাম 😅`,
-          `${text}? ওরে ভাই, এই নামটা নতুন মনে হচ্ছে 😏`,
-          `${text} ভাই আজ ভালো আছেন তো? 😉`,
+        // নতুন নাম সেভ করা
+        memory[name] = [
+          `${name} কে আগে চিনতাম না ভাই 😅 এখন থেকে চিনে রাখলাম।`,
+          `${name}? শুনছি ভালো মানুষ নাকি 😉`,
+          `${name} ভাই/আপু, কেমন আছেন আজকাল 😎`,
         ];
         fs.writeFileSync(dbPath, JSON.stringify(memory, null, 2));
-        api.sendMessage(`এই নামটা (${text}) মনে রাখলাম ভাই 😎`, threadID);
+        api.sendMessage(`নতুন নাম (${name}) মনে রাখলাম ভাই 😺`, threadID, messageID);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
+      api.sendMessage("ভাই, সিমসিমি একটু ঘুমাচ্ছে 😴 পরে চেষ্টা করেন!", threadID, messageID);
     }
   },
 };
