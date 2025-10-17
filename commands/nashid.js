@@ -1,63 +1,66 @@
-const axios = require("axios");
+const ytdl = require("ytdl-core");
 const fs = require("fs");
 const path = require("path");
 
 module.exports = {
   config: {
     name: "nashid",
-    aliases: ["nasheed", "song", "islamicsong"],
-    version: "1.0",
+    aliases: ["nasheed", "song"],
     author: "Tanvir",
-    shortDescription: "ইসলামিক নাশিদ শুনুন 🎵",
-    longDescription: "বিভিন্ন ইসলামিক নাশিদ (nasheed) প্লে করতে পারবেন এই কমান্ড দিয়ে।",
+    version: "2.1",
     category: "islamic",
+    shortDescription: "🎵 ইসলামিক নাশিদ শোনার কমান্ড",
+    longDescription:
+      "এই কমান্ডে আপনি জনপ্রিয় ইসলামিক নাশিদগুলোর তালিকা থেকে যেকোনো একটি বেছে শুনতে পারবেন।",
   },
 
-  onStart: async function ({ api, event, args }) {
-    const baseUrl = "https://raw.githubusercontent.com/Tanvirxxx69/Islamic-Nashid-Pack/main/";
-    const nashidName = args[0]?.toLowerCase();
+  onStart: async function ({ api, event }) {
+    const options = [
+      { title: "Hasbi Rabbi Jallallah", url: "https://youtu.be/qk1ZJt2rQ_E" },
+      { title: "Ya Ilahi Anta Maqsudi", url: "https://youtu.be/kK1zls8eThQ" },
+      { title: "Allahu Allahu", url: "https://youtu.be/1uwYH8pQXQY" },
+      { title: "Tala’al Badru Alayna", url: "https://youtu.be/DdI5pFfScno" },
+      { title: "Mawlaya Salli wa Sallim", url: "https://youtu.be/wFwzJ6QzN0o" },
+    ];
 
-    if (!nashidName) {
-      return api.sendMessage(
-        `🎶 *ইসলামিক নাশিদ লিস্ট:*\n\n` +
-          `1️⃣ ya_ilahi\n2️⃣ hasbi_rabbi\n3️⃣ labbaik_allahumma\n4️⃣ ya_adheeman\n5️⃣ tal_al_badru\n6️⃣ rahman_ya_rahman\n7️⃣ ya_habibi\n\n` +
-          `💡 ব্যবহার: /nashid ya_ilahi`,
-        event.threadID,
-        event.messageID
-      );
+    let msg = "🎧 কোন ইসলামিক নাশিদ শুনতে চান?\n\n";
+    options.forEach((item, i) => {
+      msg += `${i + 1}. ${item.title}\n`;
+    });
+    msg += `\n👉 যেটা চান সেটার নাম্বার রিপ্লাই দিন (১–৫)`;
+
+    api.sendMessage(msg, event.threadID, (err, info) => {
+      global.GoatBot.onReply.set(info.messageID, {
+        commandName: this.config.name,
+        messageID: info.messageID,
+        author: event.senderID,
+        options,
+      });
+    });
+  },
+
+  onReply: async function ({ api, event, Reply }) {
+    const { options, author } = Reply;
+    if (event.senderID != author) return;
+
+    const choice = parseInt(event.body);
+    if (isNaN(choice) || choice < 1 || choice > options.length) {
+      return api.sendMessage("❌ বৈধ নাম্বার দিন (১–৫)।", event.threadID);
     }
 
-    const nashids = {
-      ya_ilahi: "ya-ilahi.mp3",
-      hasbi_rabbi: "hasbi-rabbi.mp3",
-      labbaik_allahumma: "labbaik-allahumma.mp3",
-      ya_adheeman: "ya-adheeman.mp3",
-      tal_al_badru: "tal-al-badru.mp3",
-      rahman_ya_rahman: "rahman-ya-rahman.mp3",
-      ya_habibi: "ya-habibi.mp3",
-    };
-
-    const selectedFile = nashids[nashidName];
-    if (!selectedFile) {
-      return api.sendMessage(
-        `⚠️ এই নামে কোনো নাশিদ পাওয়া যায়নি!\n\n✅ ব্যবহারযোগ্য নাম:\n${Object.keys(nashids).join(", ")}`,
-        event.threadID,
-        event.messageID
-      );
-    }
-
-    const fileUrl = `${baseUrl}${selectedFile}`;
-    const filePath = path.join(__dirname, "temp.mp3");
+    const selected = options[choice - 1];
+    api.sendMessage(`🎵 আপনি বেছে নিয়েছেন: ${selected.title}\n⏳ লোড হচ্ছে...`, event.threadID);
 
     try {
-      const response = await axios({ url: fileUrl, responseType: "stream" });
+      const filePath = path.join(__dirname, `temp_${Date.now()}.mp3`);
+      const stream = ytdl(selected.url, { filter: "audioonly", quality: "highestaudio" });
       const writer = fs.createWriteStream(filePath);
-      response.data.pipe(writer);
+      stream.pipe(writer);
 
       writer.on("finish", () => {
         api.sendMessage(
           {
-            body: `🎧 এখন বাজছে: ${nashidName.replaceAll("_", " ")}`,
+            body: `🎶 এখন বাজছে: ${selected.title}`,
             attachment: fs.createReadStream(filePath),
           },
           event.threadID,
@@ -66,7 +69,7 @@ module.exports = {
       });
     } catch (err) {
       console.error(err);
-      api.sendMessage("⚠️ নাশিদ লোড করতে সমস্যা হয়েছে।", event.threadID);
+      api.sendMessage("⚠️ অডিও ডাউনলোডে সমস্যা হয়েছে!", event.threadID);
     }
   },
 };
