@@ -1,4 +1,4 @@
-name: 🟢 Run TanuGPT Bot
+name: 🚀 Run TanuGPT Bot
 
 on:
   push:
@@ -7,32 +7,28 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-bot:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧩 Checkout repository
+      - name: 🌿 Checkout repository
         uses: actions/checkout@v3
 
-      - name: 🟢 Setup Node.js
+      - name: 🧠 Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 18
 
       - name: 📦 Install dependencies
-        run: |
-          npm install
+        run: npm install
 
       - name: 🔐 Setup environment variables
         run: |
-          echo "BOT_NAME=${{ secrets.BOT_NAME }}" >> .env
-          echo "OWNER_NAME=${{ secrets.OWNER_NAME }}" >> .env
-          echo "PREFIX=${{ secrets.PREFIX }}" >> .env
-          echo "LANGUAGE=${{ secrets.LANGUAGE }}" >> .env
-          echo "TIMEZONE=${{ secrets.TIMEZONE }}" >> .env
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
-          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+          echo "BOT_NAME=TanuGPT" >> $GITHUB_ENV
+          echo "OWNER_NAME=Tanvir" >> $GITHUB_ENV
+          echo "PREFIX=/" >> $GITHUB_ENV
+          echo "TIMEZONE=Asia/Dhaka" >> $GITHUB_ENV
 
       - name: 🚀 Start the bot
-        run: |
-          node index.js
+        run: node index.js
