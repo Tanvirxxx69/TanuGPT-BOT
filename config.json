@@ -1,0 +1,27 @@
+{
+  "prefix": "/",
+  "admin": ["100006517930417", "100020665451099"],
+  "ownerName": "Tanvir Vai",
+  "ownerFb": "https://facebook.com/Tanubruh41",
+  "ownerInsta": "https://instagram.com/Tanubruh41",
+  "ownerTg": "https://t.me/Tanubruh41",
+  "language": "bn",
+  "autoRestart": true,
+  "reply": {
+    "gali": "😡 গালি দিও না ভাই! এটা বটের জায়গা, বস্তির না 😅",
+    "ownerCall": "আচ্ছা ভাই, একটু ব্যস্ত আছি 😌",
+    "normal": "আচ্ছা ভাই, বুঝে বলো — কী জানতে চাও? 😊",
+    "adminOnly": "এই কমান্ডটা শুধু Tanvir ভাই ব্যবহার করতে পারবেন 🔒",
+    "botIntro": "আমি তানভীর ভাইয়ের অফিসিয়াল বট 🤖 — ইসলামিক, ইনফো, ডাউনলোড, মজা — সব কিছুতেই মাস্টার!"
+  },
+  "autoIslamicMsg": true,
+  "timezone": "Asia/Dhaka",
+  "dailyMessage": true,
+  "ownerPics": [
+    "https://i.postimg.cc/mgcKfwsn/Photo-Studio-1669021964995.jpg",
+    "https://i.postimg.cc/q73hW9g4/Pics-Art-10-09-10-50-18.jpg",
+    "https://i.postimg.cc/T1RKL19F/Pics-Art-10-09-10-50-44.jpg",
+    "https://i.postimg.cc/Pf4pGbf5/Pics-Art-10-09-10-51-06.jpg",
+    "https://i.postimg.cc/QC3jVzXr/IMG-20250923-190030.jpg"
+  ]
+}
