@@ -1,49 +1,40 @@
 import express from "express";
-import axios from "axios";
-import fs from "fs-extra";
-import path from "path";
-import chalk from "chalk";
-import moment from "moment-timezone";
-import OpenAI from "openai";
 import dotenv from "dotenv";
-dotenv.config();
+import axios from "axios";
 
+dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
-const botName = process.env.BOT_NAME || "TanuGPT";
-const prefix = process.env.PREFIX || "/";
-const timezone = process.env.TIMEZONE || "Asia/Dhaka";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-console.log(chalk.green.bold(`✅ ${botName} Bot is now running on port ${PORT}...`));
 
 app.get("/", (req, res) => {
-  res.send(`🤖 ${botName} is running successfully!`);
+  res.send("✅ TanuGPT Bot is running fine!");
 });
 
-app.get("/chat", async (req, res) => {
-  const msg = req.query.msg || "Hello";
+app.get("/api/chat", async (req, res) => {
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: msg }],
+    const prompt = req.query.prompt || "Hello!";
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+      }
+    );
+
+    res.json({
+      reply: response.data.choices[0].message.content,
     });
-    const reply = completion.choices[0].message.content;
-    res.send(`💬 ${reply}`);
   } catch (error) {
-    console.error(chalk.red("❌ Error:"), error.message);
-    res.send("❌ API Error");
+    res.status(500).json({ error: error.message });
   }
 });
 
-app.get("/time", (req, res) => {
-  const time = moment().tz(timezone).format("hh:mm A, dddd, DD MMMM YYYY");
-  res.send(`🕒 Current time in ${timezone}: ${time}`);
-});
-
 app.listen(PORT, () => {
-  console.log(chalk.blueBright(`🌐 Server is live on port ${PORT}`));
+  console.log(`🚀 Server running on port ${PORT}`);
 });
